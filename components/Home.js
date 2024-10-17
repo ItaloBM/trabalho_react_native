@@ -39,7 +39,7 @@ const Home = ({ navigation }) => {
 
   return (
     <ImageBackground
-      source={require("../img/gs")}
+      source={require("../img/gs.png")} // include the .png extension
       style={{ flex: 1, width: "100%" }}
     >
       <Container>
