@@ -1,81 +1,83 @@
-import React, { useState, useEffect } from 'react';
-import * as S from '../styles/LoginStyles'; 
-import InputContainer from './InputContainer';
-import firebase from '../databases/Firebase';
+import React, { useState } from 'react';
+import { Alert } from 'react-native';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../databases/Firebase'; // Verifique se o caminho está correto
+import { useNavigation } from '@react-navigation/native';
+import {
+  Container,
+  Title,
+  Input,
+  Button,
+  ButtonText,
+  LinkText,
+  Footer,
+} from '../styles/LoginStyles';
 
-export default function TelaLogin({ navigation }) {
-  const [email, setEmail] = useState("");
-  const [senha, setSenha] = useState("");
-  const [carregando, setCarregando] = useState(false);
-  const [mensagem, setMensagem] = useState("");
+const Login = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const navigation = useNavigation(); // Inicializa a navegação
 
-  const tentarLogin = () => {
-    setMensagem('');
-
-    if (!email || !senha) {
-      setMensagem("Por favor, preencha todos os campos.");
-      return;
-    }
-
-    setCarregando(true);
-    
-    firebase.auth().signInWithEmailAndPassword(email, senha)
-      .then(usuario => {
-        setMensagem('Login realizado com sucesso!');
-
-        setTimeout(() => {
-          navigation.navigate("Home"); 
-          setMensagem(''); 
-        }, 1000); 
+  const handleLogin = () => {
+    console.log("Tentando logar com:", email); // Verifique se o email está correto
+    signInWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        console.log("Login bem-sucedido"); // Confirma se o login foi bem-sucedido
+        Alert.alert('Sucesso', 'Login realizado com sucesso!');
+        navigation.navigate('Home'); // Navega para a tela Home
       })
-      .catch(erro => {
-        const mensagemErro = obterMensagemPorCodigoDeErro(erro.code);
-        setMensagem(mensagemErro);
-        
+      .catch(error => {
+        console.error("Erro ao logar:", error.message); // Mostra o erro no console
+        Alert.alert('Erro', error.message);
+      });
+  };
+  
+
+  const handleSignUp = () => {
+    // Lógica de criação de conta
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        Alert.alert('Sucesso', 'Conta criada com sucesso!');
+        navigation.navigate('Home'); // Navega para a tela Home
       })
-      .finally(() => {
-        setCarregando(false); 
+      .catch(error => {
+        Alert.alert('Erro', error.message); // Exibe erro caso ocorra
       });
   };
 
-  const obterMensagemPorCodigoDeErro = (codigoErro) => {
-    switch (codigoErro) {
-      case 'auth/invalid-email':
-        return 'E-mail/Senha incorretos';
-      default:
-        return 'Erro na autenticação';
-    }
-  };
-
-  const irParaCriarConta = () => {
-    navigation.navigate("Cadastro"); 
-  };
-
   return (
-    <S.Container>
-      <S.Titulo>Login</S.Titulo>
-      <InputContainer
-        icone="envelope"
-        placeholder="E-mail"
+    <Container>
+      <Title>Bem-vindo de volta!</Title>
+
+      <Input
+        placeholder="Email"
+        placeholderTextColor="#999"
+        keyboardType="email-address"
+        autoCapitalize="none"
         value={email}
         onChangeText={setEmail}
       />
-      <InputContainer
-        icone="lock"
-        placeholder="**********"
+      <Input
+        placeholder="Senha"
+        placeholderTextColor="#999"
         secureTextEntry
-        value={senha}
-        onChangeText={setSenha}
+        value={password}
+        onChangeText={setPassword}
       />
-      <S.BotaoEntrarContainer onPress={tentarLogin} disabled={carregando}>
-        <S.BotaoEntrarTexto>Entrar</S.BotaoEntrarTexto>
-      </S.BotaoEntrarContainer>
-      {mensagem ? <S.ErroTexto>{mensagem}</S.ErroTexto> : null}
 
-      {/* Botão para criar conta */}
-      <S.BotaoCriarContaContainer onPress={irParaCriarConta}>
-        <S.BotaoCriarContaTexto>Criar Conta</S.BotaoCriarContaTexto>
-      </S.BotaoCriarContaContainer>
-    </S.Container>
+      <Button onPress={handleLogin}>
+        <ButtonText>Entrar</ButtonText>
+      </Button>
+
+      <Button onPress={handleSignUp}>
+        <ButtonText>Criar Nova Conta</ButtonText>
+      </Button>
+
+      <Footer>
+        <LinkText>Esqueceu sua senha?</LinkText>
+      </Footer>
+    </Container>
   );
-}
+};
+
+export default Login;

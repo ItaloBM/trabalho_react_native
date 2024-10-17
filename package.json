@@ -27,7 +27,7 @@
     "react-native-snap-carousel": "*",
     "react-native-vector-icons": "*",
     "react-native-web": "~0.19.10",
-    "styled-components": "*"
+    "styled-components": "^6.1.13"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

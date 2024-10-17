@@ -1,61 +1,57 @@
+// LoginStyles.js
 import styled from 'styled-components/native';
 
 export const Container = styled.View`
   flex: 1;
+  background-color: #f0f0f5;
   justify-content: center;
-  padding: 16px;
-  background-color: #f8f8f8; /* Fundo claro */
-`;
-
-export const Titulo = styled.Text`
-  font-size: 28px;
-  margin-bottom: 20px;
-  text-align: center;
-  color: #333; 
-`;
-
-export const InputContainer = styled.View`
-  flex-direction: row;
   align-items: center;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  padding: 10px;
+  padding: 20px;
+`;
+
+export const Title = styled.Text`
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
 `;
 
 export const Input = styled.TextInput`
-  flex: 1;
+  width: 100%;
+  height: 50px;
+  background-color: #fff;
+  border-radius: 8px;
   padding: 10px;
-`;
-
-export const BotaoEntrarContainer = styled.TouchableOpacity`
-  background-color: green; 
-  padding: 15px;
-  align-items: center;
-  border-radius: 5px;
-  margin-top: 10px;
-`;
-
-export const BotaoEntrarTexto = styled.Text`
-  color: white;
+  margin-bottom: 15px;
   font-size: 16px;
+  border-width: 1px;
+  border-color: #ddd;
 `;
 
-export const ErroTexto = styled.Text`
-  color: red;
-  margin-top: 10px;
-  text-align: center;
-`;
-
-export const BotaoCriarContaContainer = styled.TouchableOpacity`
-  background-color: blue; 
-  padding: 15px;
+export const Button = styled.TouchableOpacity`
+  width: 100%;
+  height: 50px;
+  background-color: #6200ea;
+  justify-content: center;
   align-items: center;
-  border-radius: 5px;
-  margin-top: 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
 `;
 
-export const BotaoCriarContaTexto = styled.Text`
-  color: white;
-  font-size: 16px;
+export const ButtonText = styled.Text`
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+`;
+
+export const LinkText = styled.Text`
+  color: #6200ea;
+  font-size: 14px;
+  margin-top: 10px;
+  text-decoration: underline;
+`;
+
+export const Footer = styled.View`
+  align-items: center;
+  margin-top: 20px;
 `;

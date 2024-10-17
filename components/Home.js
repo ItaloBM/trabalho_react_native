@@ -1,62 +1,52 @@
-// Home.js
-import React, { useState } from "react";
-import { ImageBackground } from "react-native";
+import React from 'react';
+import { View, FlatList, Text, StyleSheet } from 'react-native';
 
-import {
-  Container,
-  Title,
-  LogoutBotao,
-  LogoutBotaoTexto,
-} from "../styles/HomeStyles";
-import Busca from "./Busca";
-import Lobby from "./Lobby";
+const gamesData = [
+  { id: '1', title: 'The Legend of Zelda: Breath of the Wild' },
+  { id: '2', title: 'Super Mario Odyssey' },
+  { id: '3', title: 'Minecraft' },
+  { id: '4', title: 'Fortnite' },
+];
 
-const Home = ({ navigation }) => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categories] = useState([
-    { id: "1", name: "R6", image: require("../img/gs.png") },
-    { id: "2", name: "GTA", image: require("../img/lol.png") },
-    { id: "3", name: "Categoria 3", image: require("../img/r6.png") },
-  ]);
-
-  const [lobbies, setLobbies] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-
-  const handleSearch = (query) => {
-    setSearchQuery(query);
-  };
-
-  const handleSelectCategory = (category) => {
-    setSelectedCategory(category);
-    // Simulação de busca de lobbies
-    const fetchedLobbies = [
-      { id: "1", name: "Lobby 1", playerCount: 3 },
-      { id: "2", name: "Lobby 2", playerCount: 5 },
-      { id: "3", name: "Lobby 3", playerCount: 2 },
-    ];
-    setLobbies(fetchedLobbies); // Atualiza o estado dos lobbies
-  };
-
+const Home = () => {
   return (
-    <ImageBackground
-      source={require("../img/gs.png")} // include the .png extension
-      style={{ flex: 1, width: "100%" }}
-    >
-      <Container>
-        <Title>Bem-vindo à Rede Social de Games!</Title>
-        <Busca
-          searchQuery={searchQuery}
-          handleSearch={handleSearch}
-          categories={categories}
-          handleSelectCategory={handleSelectCategory}
-        />
-        <Lobby selectedCategory={selectedCategory} lobbies={lobbies} />
-        <LogoutBotao onPress={() => navigation.navigate("Login")}>
-          <LogoutBotaoTexto>Sair</LogoutBotaoTexto>
-        </LogoutBotao>
-      </Container>
-    </ImageBackground>
+    <View style={styles.container}>
+      <Text style={styles.title}>Jogos Disponíveis</Text>
+      <FlatList
+        data={gamesData}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <View style={styles.item}>
+            <Text style={styles.itemText}>{item.title}</Text>
+          </View>
+        )}
+      />
+    </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#f0f0f5',
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 20,
+  },
+  item: {
+    padding: 15,
+    marginVertical: 5,
+    backgroundColor: '#6200ea',
+    borderRadius: 8,
+  },
+  itemText: {
+    color: '#fff',
+    fontSize: 18,
+  },
+});
 
 export default Home;
