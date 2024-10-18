@@ -1,52 +1,105 @@
-import React from 'react';
-import { View, FlatList, Text, StyleSheet } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { FlatList, Image, View, TouchableOpacity, Modal } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons'; // Importando ícones
+import {
+  Container,
+  Titulo,
+  Jogos,
+  ItemTexto,
+  Botao,
+  BotaoTexto,
+} from '../styles/HomeStyles';
 
 const gamesData = [
-  { id: '1', title: 'The Legend of Zelda: Breath of the Wild' },
-  { id: '2', title: 'Super Mario Odyssey' },
-  { id: '3', title: 'Minecraft' },
-  { id: '4', title: 'Fortnite' },
+  { id: '1', title: 'Rainbow Six Siege', image: require('../img/r6.png') },
+  { id: '2', title: 'Counter Strike 2', image: require('../img/cs2.png') },
+  { id: '3', title: 'Fortnite', image: require('../img/fortnite.png') },
+  // Adicione mais jogos conforme necessário
 ];
 
 const Home = () => {
+  const flatListRef = useRef(null); // Referência para o FlatList
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedGame, setSelectedGame] = useState(null);
+
+  const scrollToIndex = (index) => {
+    flatListRef.current.scrollToIndex({ animated: true, index });
+  };
+
+  const openModal = (game) => {
+    setSelectedGame(game);
+    setModalVisible(true);
+  };
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setSelectedGame(null);
+  };
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Jogos Disponíveis</Text>
-      <FlatList
-        data={gamesData}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => (
-          <View style={styles.item}>
-            <Text style={styles.itemText}>{item.title}</Text>
+    <Container>
+      <Titulo>Jogos Disponíveis</Titulo>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <TouchableOpacity onPress={() => scrollToIndex(0)}>
+          <Icon name="chevron-back" size={30} color="rgb(0, 255, 136)" />
+        </TouchableOpacity>
+        
+        <FlatList
+          ref={flatListRef} // Adicionando a referência aqui
+          data={gamesData}
+          keyExtractor={item => item.id}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 10 }}
+          renderItem={({ item, index }) => (
+            <Jogos style={{ marginHorizontal: 10 }}>
+              <TouchableOpacity onPress={() => openModal(item)}>
+                <Image 
+                  source={item.image} 
+                  style={{ width: 120, height : 180, borderRadius: 8 }} 
+                />
+                <ItemTexto>{item.title}</ItemTexto>
+              </TouchableOpacity>
+            </Jogos>
+          )}
+        />
+        
+        <TouchableOpacity onPress={() => scrollToIndex(gamesData.length - 1)}>
+          <Icon name="chevron-forward" size={30} color="rgb(0, 255, 136)" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Modal para buscar lobby */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={closeModal}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0, 0, 0, 0.7)' }}>
+          <View style={{ width: 300, padding: 20, backgroundColor: 'white', borderRadius: 10 }}>
+            {selectedGame && (
+              <>
+                <Image 
+                  source={selectedGame.image} 
+                  style={{ width: 100, height: 150, borderRadius: 8, alignSelf: 'center' }} 
+                />
+                <ItemTexto style={{ textAlign: 'center', marginVertical: 10 }}>{selectedGame.title}</ItemTexto>
+                
+                <Botao onPress={() => {/* Lógica para buscar lobby */}}>
+                  <BotaoTexto>Buscar Lobby</BotaoTexto>
+                </Botao>
+                
+                <Botao onPress={closeModal}>
+                  <BotaoTexto>Fechar</BotaoTexto>
+                </Botao>
+              </>
+            )}
           </View>
-        )}
-      />
-    </View>
+        </View>
+      </Modal>
+    </Container>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: '#f0f0f5',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 20,
-  },
-  item: {
-    padding: 15,
-    marginVertical: 5,
-    backgroundColor: '#6200ea',
-    borderRadius: 8,
-  },
-  itemText: {
-    color: '#fff',
-    fontSize: 18,
-  },
-});
 
 export default Home;

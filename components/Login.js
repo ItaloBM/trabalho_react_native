@@ -1,53 +1,32 @@
 import React, { useState } from 'react';
 import { Alert } from 'react-native';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../databases/Firebase'; // Verifique se o caminho está correto
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../databases/Firebase';
 import { useNavigation } from '@react-navigation/native';
-import {
-  Container,
-  Title,
-  Input,
-  Button,
-  ButtonText,
-  LinkText,
-  Footer,
-} from '../styles/LoginStyles';
+import { Container, Titulo, Input, Botao, BotaoTexto } from '../styles/LoginStyles';
 
 const Login = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const navigation = useNavigation(); // Inicializa a navegação
+  const [senha, setSenha] = useState('');
+  const navigation = useNavigation();
 
   const handleLogin = () => {
-    console.log("Tentando logar com:", email); // Verifique se o email está correto
-    signInWithEmailAndPassword(auth, email, password)
+    console.log("Tentando logar com:", email);
+    signInWithEmailAndPassword(auth, email, senha)
       .then(() => {
-        console.log("Login bem-sucedido"); // Confirma se o login foi bem-sucedido
+        console.log("Login bem-sucedido");
         Alert.alert('Sucesso', 'Login realizado com sucesso!');
-        navigation.navigate('Home'); // Navega para a tela Home
+        navigation.navigate('Home');
       })
       .catch(error => {
-        console.error("Erro ao logar:", error.message); // Mostra o erro no console
+        console.error("Erro ao logar:", error.message);
         Alert.alert('Erro', error.message);
-      });
-  };
-  
-
-  const handleSignUp = () => {
-    // Lógica de criação de conta
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        Alert.alert('Sucesso', 'Conta criada com sucesso!');
-        navigation.navigate('Home'); // Navega para a tela Home
-      })
-      .catch(error => {
-        Alert.alert('Erro', error.message); // Exibe erro caso ocorra
       });
   };
 
   return (
     <Container>
-      <Title>Bem-vindo de volta!</Title>
+      <Titulo>Bem-vindo de volta, jogador!</Titulo>
 
       <Input
         placeholder="Email"
@@ -61,21 +40,13 @@ const Login = () => {
         placeholder="Senha"
         placeholderTextColor="#999"
         secureTextEntry
-        value={password}
-        onChangeText={setPassword}
+        value={senha}
+        onChangeText={setSenha}
       />
 
-      <Button onPress={handleLogin}>
-        <ButtonText>Entrar</ButtonText>
-      </Button>
-
-      <Button onPress={handleSignUp}>
-        <ButtonText>Criar Nova Conta</ButtonText>
-      </Button>
-
-      <Footer>
-        <LinkText>Esqueceu sua senha?</LinkText>
-      </Footer>
+      <Botao onPress={handleLogin}>
+        <BotaoTexto>Entrar</BotaoTexto>
+      </Botao>
     </Container>
   );
 };
