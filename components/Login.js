@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert } from 'react-native'; 
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../databases/Firebase';
 import { useNavigation } from '@react-navigation/native';
-import { Container, Titulo, Input, Botao, BotaoTexto } from '../styles/LoginStyles';
+import { Container, Titulo, Input, Botao, BotaoTexto, Texto, LogoImage } from '../styles/LoginStyles';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -26,8 +26,9 @@ const Login = () => {
 
   return (
     <Container>
-      <Titulo>Bem-vindo de volta, jogador!</Titulo>
 
+      <LogoImage source={{ uri: 'https://static.vecteezy.com/system/resources/thumbnails/007/698/902/small_2x/geek-gamer-avatar-profile-icon-free-vector.jpg' }} style={{ width: 100, height: 100 }} />
+      <Titulo>Bem-vindo de volta, jogador!</Titulo>
       <Input
         placeholder="Email"
         placeholderTextColor="#999"
@@ -43,7 +44,9 @@ const Login = () => {
         value={senha}
         onChangeText={setSenha}
       />
-
+      <Texto>
+        Esqueceu a senha?
+      </Texto>
       <Botao onPress={handleLogin}>
         <BotaoTexto>Entrar</BotaoTexto>
       </Botao>

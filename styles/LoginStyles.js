@@ -7,12 +7,11 @@ export const Container = styled.View`
   align-items: center;
   padding: 20px;
 `;
-
 export const Titulo = styled.Text`
   font-size: 32px;
   font-weight: bold;
+  text-align: center;
   color: rgb(0, 255, 136); 
-  margin-bottom: 30px;
   text-shadow: 2px 2px 8px rgba(0, 255, 136, 0.7); 
 `;
 
@@ -22,7 +21,7 @@ export const Input = styled.TextInput`
   background-color: rgb(38, 38, 38); 
   border-radius: 10px;
   padding: 10px;
-  margin-bottom: 20px;
+  margin-top: 20px;
   font-size: 16px;
   color: rgb(255, 255, 255); 
   border-width: 1px;
@@ -46,4 +45,18 @@ export const BotaoTexto = styled.Text`
   font-size: 20px;
   font-weight: bold;
   letter-spacing: 1px;
+`;
+
+export const Texto = styled.Text`
+  width: 100%;
+  color: rgb(255, 255, 255);
+  text-align: end;
+  margin-bottom: 20px;
+`;
+
+export const LogoImage = styled.Image`
+  width: 100px;
+  height: 100px;
+  border-radius: 50px;
+  margin-bottom: 20px;
 `;
