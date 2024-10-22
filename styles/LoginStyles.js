@@ -37,6 +37,7 @@ export const Botao = styled.TouchableOpacity`
   border-radius: 10px;
   margin-bottom: 15px;
   elevation: 3;
+  margin-top: 20px;
 `;
 
 export const BotaoTexto = styled.Text`
