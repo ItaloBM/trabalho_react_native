@@ -1,32 +1,38 @@
 import React, { useState } from 'react';
-import { Alert } from 'react-native'; 
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { Alert } from 'react-native';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../databases/Firebase';
 import { useNavigation } from '@react-navigation/native';
 import { Container, Titulo, Input, Botao, BotaoTexto, Texto, LogoImage } from '../styles/LoginStyles';
 
-const Login = () => {
+const Cadastro = () => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState(''); 
+  const [confirmSenha, setConfirmSenha] = useState('');
+  const [erro, setErro] = useState('');
   const navigation = useNavigation();
 
-  const handleLogin = () => {
-    console.log("Tentando logar com:", email);
-    signInWithEmailAndPassword(auth, email, senha)
+  const handleCadastro = () => {
+    if (senha !== confirmSenha) {
+      setErro('As senhas não coincidem');
+      return;
+    }
+
+    console.log("Tentando cadastrar com:", email);
+    createUserWithEmailAndPassword(auth, email, senha)
       .then(() => {
-        console.log("Login bem-sucedido");
-        Alert.alert('Sucesso', 'Login realizado com sucesso!');
-        setErro(''); 
+        console.log("Cadastro bem-sucedido");
+        Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
+        setErro('');
         navigation.navigate('Home');
       })
       .catch(error => {
-        console.error("Erro ao logar:", error.message);
-        setErro('Email/senha inválidos');
+        console.error("Erro ao cadastrar:", error.message);
+        setErro(error.message);
         Alert.alert('Erro', error.message);
-        
+
         setTimeout(() => {
-          setErro(''); 
+          setErro('');
         }, 2000);
       });
   };
@@ -34,7 +40,7 @@ const Login = () => {
   return (
     <Container>
       <LogoImage source={{ uri: 'https://static.vecteezy.com/system/resources/thumbnails/007/698/902/small_2x/geek-gamer-avatar-profile-icon-free-vector.jpg' }} style={{ width: 100, height: 100 }} />
-      <Titulo>Bem-vindo de volta, jogador!</Titulo>
+      <Titulo>Criar Conta</Titulo>
       <Input
         placeholder="Email"
         placeholderTextColor="#999"
@@ -50,18 +56,19 @@ const Login = () => {
         value={senha}
         onChangeText={setSenha}
       />
+      <Input
+        placeholder="Confirmar Senha"
+        placeholderTextColor="#999"
+        secureTextEntry
+        value={confirmSenha}
+        onChangeText={setConfirmSenha}
+      />
       {erro ? <Texto style={{ color: 'red' }}>{erro}</Texto> : null}
-      
-      <Botao onPress={handleLogin}>
-        <BotaoTexto>Entrar</BotaoTexto>
-      </Botao>
-      
-      {/* Botão para navegar para a tela de Cadastro */}
-      <Botao onPress={() => navigation.navigate('Cadastro')}>
-        <BotaoTexto>Cadastrar-se</BotaoTexto>
+      <Botao onPress={handleCadastro}>
+        <BotaoTexto>Cadastrar</BotaoTexto>
       </Botao>
     </Container>
   );
 };
 
-export default Login;
+export default Cadastro;

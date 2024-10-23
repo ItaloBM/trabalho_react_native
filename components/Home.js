@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { FlatList, Image, View, TouchableOpacity, Modal, ActivityIndicator, TextInput } from 'react-native';
+import { FlatList, Image, View, TouchableOpacity, Modal, ActivityIndicator, TextInput, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -32,13 +32,63 @@ const gamesData = [
   { id: '10', title: 'Playerunknowns Battlegrounds', image: require('../img/pubg.png') },
 ];
 
+const ProfileModal = ({ avatarModalVisible, setAvatarModalVisible, nickname, setNickname, handleLogout }) => {
+  const [isEditing, setIsEditing] = useState(false);
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent
+      visible={avatarModalVisible}
+      onRequestClose={() => setAvatarModalVisible(false)}
+    >
+      <ModalContainer>
+        <ModalConteudo>
+          <ModalTitulo>Configurações do Perfil</ModalTitulo>
+
+          {!isEditing ? (
+            <TouchableOpacity onPress={() => setIsEditing(true)}>
+              <Nickname style={{ color: '#fff' }}>{nickname}</Nickname>
+            </TouchableOpacity>
+          ) : (
+            <TextInput
+              value={nickname}
+              onChangeText={setNickname}
+              onBlur={() => setIsEditing(false)}
+              placeholder="Alterar Nickname"
+              placeholderTextColor="#fff"
+              style={{
+                borderWidth: 1,
+                borderColor: '#ccc',
+                marginBottom: 10,
+                padding: 8,
+                borderRadius: 5,
+                color: '#fff'
+              }}
+            />
+          )}
+
+          <Botao onPress={handleLogout}>
+            <BotaoTexto>Sair</BotaoTexto>
+          </Botao>
+
+          <Botao onPress={() => setAvatarModalVisible(false)}>
+            <BotaoTexto>Fechar</BotaoTexto>
+          </Botao>
+        </ModalConteudo>
+      </ModalContainer>
+    </Modal>
+  );
+};
+
+
 const Home = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedGame, setSelectedGame] = useState(null);
   const [loading, setLoading] = useState(false);
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
   const [nickname, setNickname] = useState('Ovattsug');
-  const [isLoggedIn, setIsLoggedIn] = useState(true); 
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const navigation = useNavigation();
   const flatListRef = useRef(null);
 
@@ -78,7 +128,7 @@ const Home = () => {
 
   return (
     <Container>
-      {isLoggedIn && ( 
+      {isLoggedIn && (
         <>
           <PerfilContainer>
             <TouchableOpacity onPress={() => setAvatarModalVisible(true)}>
@@ -133,33 +183,13 @@ const Home = () => {
             </Modal>
           )}
 
-          <Modal
-            animationType="slide"
-            transparent
-            visible={avatarModalVisible}
-            onRequestClose={() => setAvatarModalVisible(false)}
-          >
-            <ModalContainer>
-              <ModalConteudo>
-                <ModalTitulo>Configurações do Perfil</ModalTitulo>
-
-                <TextInput
-                  value={nickname}
-                  onChangeText={setNickname}
-                  placeholder="Alterar Nickname"
-                  style={{ borderWidth: 1, borderColor: '#ccc', marginBottom: 10, padding: 8, borderRadius: 5 }}
-                />
-
-                <Botao onPress={handleLogout}>
-                  <BotaoTexto>Sair</BotaoTexto>
-                </Botao>
-
-                <Botao onPress={() => setAvatarModalVisible(false)}>
-                  <BotaoTexto>Fechar</BotaoTexto>
-                </Botao>
-              </ModalConteudo>
-            </ModalContainer>
-          </Modal>
+          <ProfileModal
+            avatarModalVisible={avatarModalVisible}
+            setAvatarModalVisible={setAvatarModalVisible}
+            nickname={nickname}
+            setNickname={setNickname}
+            handleLogout={handleLogout}
+          />
         </>
       )}
     </Container>

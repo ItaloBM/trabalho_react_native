@@ -1,9 +1,11 @@
-import styled from 'styled-components/native'; 
-import { TouchableOpacity, Text, View, TextInput } from 'react-native'; 
+import styled from 'styled-components/native';
+import { TouchableOpacity, Text, View, TextInput } from 'react-native';
 
 export const Container = styled(View)`
   flex: 1;
   background-color: rgb(10, 10, 10); 
+  justify-content: center;
+  align-items: center;
   padding: 20px;
 `;
 
@@ -15,7 +17,7 @@ export const Titulo = styled(Text)`
 `;
 
 export const Botao = styled(TouchableOpacity)`
-  width: 100%;
+  width: 70%;
   height: 50px;
   background-color: rgb(0, 255, 136);
  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
@@ -37,7 +39,6 @@ export const LobbyContainer = styled(View)`
   padding: 10px; 
   background-color: #555; 
   border-radius: 5px;
-  width: 35%; 
   align-self: center; 
 `;
 
@@ -54,6 +55,8 @@ export const LobbyMembros = styled(Text)`
 
 export const ModalContainer = styled(View)`
   flex: 1;
+  justify-content: center;
+  align-items: center;
   background-color: rgb(10, 10, 10); 
   padding: 20px;
 `;
