@@ -1,11 +1,21 @@
-# Sample Snack app
+#Para rodar o App
 
-Open the `App.js` file to start writing some code. You can preview the changes directly on your phone or tablet by scanning the **QR code** or use the iOS or Android emulators. When you're done, click **Save** and share the link!
+--> Node.js instalado na maquina
+--> Expo CLI instalado na maquina ( npm install -g expo-cli )
+--> clonar o repositorio ( git clone )
+--> rodar o npm dentro da pasta do projeto ( npm install )
+--> pra rodar só dar o comando ( npx expo start );
 
-When you're ready to see everything that Expo provides (or if you want to use your own editor) you can **Download** your project and use it with [expo cli](https://docs.expo.dev/get-started/installation/#expo-cli)).
+Caso de erro ao rodar (npx expo start):
+rodar estes dois comando no powershel do windows ou cmd com permissao de adm 
 
-All projects created in Snack are publicly available, so you can easily share the link to this project via link, or embed it on a web page with the `<>` button.
+--> Get-ExecutionPolicy
 
-If you're having problems, you can tweet to us [@expo](https://twitter.com/expo) or ask in our [forums](https://forums.expo.dev/c/expo-dev-tools/61) or [Discord](https://chat.expo.dev/).
+--> Set-ExecutionPolicy RemoteSigned -Scope CurrentUser ( Y );
 
-Snack is Open Source. You can find the code on the [GitHub repo](https://github.com/expo/snack).
+verificar se o expo esta instalado
+
+--> expo --version
+
+
+
