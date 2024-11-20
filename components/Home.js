@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FlatList, Image, View, TouchableOpacity, Modal, ActivityIndicator, TextInput, Text } from 'react-native';
+import { FlatList, Image, TouchableOpacity, Modal, ActivityIndicator, TextInput, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
-import { auth } from '../databases/Firebase'; // Import Firebase auth
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, db } from '../databases/Firebase';
 import {
   Container,
   Titulo,
@@ -17,7 +18,7 @@ import {
   ModalTitulo,
   PerfilContainer,
   PerfilImagem,
-  Nickname
+  Nickname,
 } from '../styles/HomeStyles';
 
 const gamesData = [
@@ -33,80 +34,103 @@ const gamesData = [
   { id: '10', title: 'Playerunknowns Battlegrounds', image: require('../img/pubg.png') },
 ];
 
-const ProfileModal = ({ avatarModalVisible, setAvatarModalVisible, nickname, setNickname, handleLogout }) => {
-  const [isEditing, setIsEditing] = useState(false);
-
-  return (
-    <Modal
-      animationType="slide"
-      transparent
-      visible={avatarModalVisible}
-      onRequestClose={() => setAvatarModalVisible(false)}
-    >
-      <ModalContainer>
-        <ModalConteudo>
-          <ModalTitulo>Configurações do Perfil</ModalTitulo>
-
-          {!isEditing ? (
-            <TouchableOpacity onPress={() => setIsEditing(true)}>
-              <Nickname style={{ color: '#fff' }}>{nickname}</Nickname>
-            </TouchableOpacity>
-          ) : (
-            <TextInput
-              value={nickname}
-              onChangeText={setNickname}
-              onBlur={() => setIsEditing(false)}
-              placeholder="Alterar Nickname"
-              placeholderTextColor="#fff"
-              style={{
-                borderWidth: 1,
-                borderColor: '#ccc',
-                marginBottom: 10,
-                padding: 8,
-                borderRadius: 5,
-                color: '#fff'
-              }}
-            />
-          )}
-
-          <Botao onPress={handleLogout}>
-            <BotaoTexto>Sair</BotaoTexto>
-          </Botao>
-
-          <Botao onPress={() => setAvatarModalVisible(false)}>
-            <BotaoTexto>Fechar</BotaoTexto>
-          </Botao>
-        </ModalConteudo>
-      </ModalContainer>
-    </Modal>
-  );
-};
-
 const Home = () => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedGame, setSelectedGame] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [nickname, setNickname] = useState('Carregando...');
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
-  const [nickname, setNickname] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const [selectedGame, setSelectedGame] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [newNickname, setNewNickname] = useState('');
+  const [animation] = useState(new Animated.Value(0));
+
   const navigation = useNavigation();
   const flatListRef = useRef(null);
 
-  // Fetch the user's name from Firebase on component mount
   useEffect(() => {
-    if (auth.currentUser) {
-      const email = auth.currentUser.email;
-      const username = email ? email.split('@')[0] : 'Jogador'; // Extract the part before '@'
-      setNickname(username); // Set the nickname to the username extracted
-    }
+    const unsubscribe = auth.onAuthStateChanged((currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        fetchUserNickname(currentUser.uid);
+      } else {
+        setUser(null);
+        setNickname('Usuário não autenticado');
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const openModal = (game) => {
+  const fetchUserNickname = async (uid) => {
+    try {
+      setLoading(true);
+      const userDoc = await getDoc(doc(db, 'usuarios', uid));
+      if (userDoc.exists()) {
+        setNickname(userDoc.data().nickname || 'Sem nickname');
+      } else {
+        setNickname('Usuário não encontrado');
+      }
+    } catch (error) {
+      console.error('Erro ao buscar nickname:', error);
+      setNickname('Erro ao carregar');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateNicknameInFirestore = async (uid, newNickname) => {
+    try {
+      const userDocRef = doc(db, 'usuarios', uid);
+      await updateDoc(userDocRef, {
+        nickname: newNickname,
+      });
+      console.log('Nickname atualizado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao atualizar nickname no Firestore:', error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Erro ao sair:', error);
+    }
+  };
+
+  const openProfileModal = () => {
+    setAvatarModalVisible(true);
+    Animated.timing(animation, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const closeProfileModal = () => {
+    Animated.timing(animation, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => setAvatarModalVisible(false));
+  };
+
+  const updateNickname = () => {
+    if (newNickname.trim()) {
+      setNickname(newNickname);
+      updateNicknameInFirestore(user.uid, newNickname);
+      closeProfileModal();
+    }
+  };
+
+  const openGameModal = (game) => {
     setSelectedGame(game);
     setModalVisible(true);
   };
 
-  const closeModal = () => {
+  const closeGameModal = () => {
     setModalVisible(false);
     setSelectedGame(null);
   };
@@ -114,7 +138,7 @@ const Home = () => {
   const goToLobby = () => {
     setLoading(true);
     setTimeout(() => {
-      closeModal();
+      closeGameModal();
       navigation.navigate('Lobby', { selectedGame: selectedGame?.title });
       setLoading(false);
     }, 1500);
@@ -122,28 +146,28 @@ const Home = () => {
 
   const renderGameItem = ({ item }) => (
     <Jogos>
-      <TouchableOpacity onPress={() => openModal(item)}>
+      <TouchableOpacity onPress={() => openGameModal(item)}>
         <Image source={item.image} style={{ width: 200, height: 200, borderRadius: 10 }} />
         <ItemTexto>{item.title}</ItemTexto>
       </TouchableOpacity>
     </Jogos>
   );
 
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    console.log('Usuário Deslogado');
-    navigation.navigate('Login');
-  };
+  if (loading) {
+    return <ActivityIndicator size="large" color="#00f" />;
+  }
 
   return (
     <Container>
-      {isLoggedIn && (
+      {user && (
         <>
           <PerfilContainer>
-            <TouchableOpacity onPress={() => setAvatarModalVisible(true)}>
+            <TouchableOpacity onPress={openProfileModal}>
               <PerfilImagem source={require('../img/avatar.png')} />
             </TouchableOpacity>
-            <Nickname>{nickname}</Nickname>
+            <TouchableOpacity onPress={openProfileModal}>
+              <Nickname>{nickname}</Nickname>
+            </TouchableOpacity>
           </PerfilContainer>
 
           <Titulo>Jogos Disponíveis</Titulo>
@@ -166,39 +190,43 @@ const Home = () => {
             </TouchableOpacity>
           </NavegacaoContainer>
 
-          {selectedGame && (
-            <Modal
-              animationType="slide"
-              transparent
-              visible={modalVisible}
-              onRequestClose={closeModal}
-            >
-              <ModalContainer>
-                <ModalConteudo>
-                  <ModalImagem source={selectedGame.image} />
-                  <ModalTitulo>{selectedGame.title}</ModalTitulo>
-                  <Botao onPress={goToLobby} disabled={loading}>
-                    {loading ? (
-                      <ActivityIndicator size="small" color="#0000ff" />
-                    ) : (
-                      <BotaoTexto>Buscar Lobby</BotaoTexto>
-                    )}
-                  </Botao>
-                  <Botao onPress={closeModal}>
-                    <BotaoTexto>Fechar</BotaoTexto>
-                  </Botao>
-                </ModalConteudo>
-              </ModalContainer>
-            </Modal>
-          )}
+          <Modal visible={avatarModalVisible} transparent animationType="fade">
+            <ModalContainer>
+              <Animated.View
+                style={[{ transform: [{ scale: animation }] }, { width: '80%', backgroundColor: 'rgb(38, 38, 38)', borderRadius: 10, padding: 20 }]}
+              >
+                <ModalTitulo>Editar Perfil</ModalTitulo>
+                <TextInput
+                  placeholder="Digite um novo nickname"
+                  placeholderTextColor="#888"
+                  value={newNickname}
+                  onChangeText={setNewNickname}
+                  style={{ backgroundColor: '#fff', padding: 10, borderRadius: 5, marginBottom: 10 }}
+                />
+                <Botao onPress={updateNickname}>
+                  <BotaoTexto>Salvar</BotaoTexto>
+                </Botao>
+                <TouchableOpacity onPress={closeProfileModal} style={{ position: 'absolute', top: 10, right: 10 }}>
+                  <Icon name="close" size={30} color="white" />
+                </TouchableOpacity>
+              </Animated.View>
+            </ModalContainer>
+          </Modal>
 
-          <ProfileModal
-            avatarModalVisible={avatarModalVisible}
-            setAvatarModalVisible={setAvatarModalVisible}
-            nickname={nickname}
-            setNickname={setNickname}
-            handleLogout={handleLogout}
-          />
+          <Modal visible={modalVisible} transparent animationType="slide">
+            <ModalContainer>
+              <ModalConteudo>
+                <ModalImagem source={selectedGame?.image} />
+                <ModalTitulo>{selectedGame?.title}</ModalTitulo>
+                <Botao onPress={goToLobby}>
+                  <BotaoTexto>Entrar na Sala</BotaoTexto>
+                </Botao>
+                <TouchableOpacity onPress={closeGameModal} style={{ position: 'absolute', top: 10, right: 10 }}>
+                  <Icon name="close" size={30} color="white" />
+                </TouchableOpacity>
+              </ModalConteudo>
+            </ModalContainer>
+          </Modal>
         </>
       )}
     </Container>

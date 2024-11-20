@@ -1,8 +1,7 @@
-
 import React, { useEffect, useState } from 'react';
-import { View, FlatList, TextInput, TouchableOpacity } from 'react-native';
-import { db } from '../databases/Firebase';
-import { collection, addDoc, onSnapshot } from 'firebase/firestore';
+import { FlatList, Platform } from 'react-native';
+import io from 'socket.io-client';
+import Toast from 'react-native-toast-message';  
 import {
   Container,
   Titulo,
@@ -14,36 +13,60 @@ import {
   MensagemTexto,
 } from '../styles/ChatStyles';
 
-const Chat = ({ route }) => {
-  const { lobbyId } = route.params; 
-  const [mensagens, setMensagens] = useState([]);
-  const [novaMensagem, setNovaMensagem] = useState('');
+const Chat = () => {
+  const [mensagens, setMensagens] = useState([]); 
+  const [novaMensagem, setNovaMensagem] = useState(''); 
+  const [socket, setSocket] = useState(null); 
 
   useEffect(() => {
-    const unsubscribe = onSnapshot(collection(db, 'lobbies', lobbyId, 'mensagens'), (snapshot) => {
-      const novasMensagens = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setMensagens(novasMensagens);
-    });
-    return () => unsubscribe();
-  }, [lobbyId]);
+    
+    const newSocket = io('http://192.168.1.106:3000'); 
+    setSocket(newSocket);
 
-  const enviarMensagem = async () => {
-    if (novaMensagem.trim() !== '') {
-      await addDoc(collection(db, 'lobbies', lobbyId, 'mensagens'), {
-        texto: novaMensagem,
-        timestamp: new Date()
-      });
+    
+    newSocket.on('connect', () => {
+      console.log('Conectado ao servidor:', newSocket.id);
+    });
+
+    
+    newSocket.on('novaMensagem', (mensagem) => {
+      setMensagens((prevMensagens) => [...prevMensagens, mensagem]);
+    });
+
+    
+    return () => {
+      newSocket.disconnect();
+      console.log('Desconectado do servidor');
+    };
+  }, []); 
+
+  const enviarMensagem = () => {
+    if (novaMensagem.trim() !== '' && socket) {
+      const mensagem = { texto: novaMensagem, timestamp: new Date() };
+
+      
+      socket.emit('enviarMensagem', mensagem);
+
+      
       setNovaMensagem('');
+
+      
+      Toast.show({
+        type: 'success', 
+        position: 'bottom', 
+        text1: 'Mensagem enviada!',
+        visibilityTime: 2000, 
+      });
     }
   };
 
   return (
     <Container>
-      <Titulo>Chat do Lobby</Titulo>
+      <Titulo>Chat em Tempo Real</Titulo>
       <ChatContainer>
         <FlatList
           data={mensagens}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item, index) => index.toString()} 
           renderItem={({ item }) => (
             <Mensagem>
               <MensagemTexto>{item.texto}</MensagemTexto>
@@ -59,6 +82,9 @@ const Chat = ({ route }) => {
       <Botao onPress={enviarMensagem}>
         <BotaoTexto>Enviar</BotaoTexto>
       </Botao>
+
+      
+      <Toast />
     </Container>
   );
 };

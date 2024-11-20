@@ -1,96 +1,86 @@
 import React, { useState } from 'react';
-import { Alert, TouchableOpacity, View } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../databases/Firebase';
+import { Alert } from 'react-native';
+import { createUserWithEmailAndPassword, fetchSignInMethodsForEmail } from 'firebase/auth';
+import { auth, db } from '../databases/Firebase'; 
 import { useNavigation } from '@react-navigation/native';
-import { MaterialIcons } from '@expo/vector-icons'; 
-import { Container, Titulo, Input, Botao, BotaoTexto, ErroTexto, LogoImage, InputContainer, IconOcultar } from '../styles/CadastroStyles';
+import { Container, Titulo, Input, Botao, BotaoTexto, Texto, LogoImage } from '../styles/LoginStyles';
+import { doc, setDoc } from 'firebase/firestore'; 
 
 const Cadastro = () => {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmSenha, setConfirmSenha] = useState('');
+  const [nickname, setNickname] = useState('');
   const [erro, setErro] = useState('');
-  const [senhaVisivel, setSenhaVisivel] = useState(false); 
-  const [confirmSenhaVisivel, setConfirmSenhaVisivel] = useState(false); 
   const navigation = useNavigation();
 
-  const handleCadastro = () => {
-    if (!email || !senha || !confirmSenha) {
-      setErro('Preencha todos os campos');
-      return;
-    }
-
+  const handleCadastro = async () => {
     if (senha !== confirmSenha) {
       setErro('As senhas não coincidem');
       return;
     }
 
-    createUserWithEmailAndPassword(auth, email, senha)
-      .then((userCredential) => {
-        Alert.alert('Sucesso', 'Cadastro realizado com sucesso!');
-        setErro('');
-        navigation.navigate('Login'); 
-      })
-      .catch(error => {
-        let errorMessage = error.message;
+    if (!nickname) {
+      setErro('Por favor, informe um nickname');
+      return;
+    }
 
-        if (error.code === 'auth/weak-password') {
-          errorMessage = 'A senha não pode ter menos de 6 caracteres';
-        } else if (error.code === 'auth/invalid-email') {
-          errorMessage = 'O e-mail informado é inválido';
-        } else if (error.code === 'auth/missing-password') {
-          errorMessage = 'Preencha todos os campos';
-        }
+    try {
+      
+      const methods = await fetchSignInMethodsForEmail(auth, email);
+      if (methods.length > 0) {
+        setErro('Este e-mail já está registrado');
+        return;
+      }
 
-        setErro(errorMessage);
-        Alert.alert('Erro', errorMessage);
+      
+      const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
 
-        setTimeout(() => {
-          setErro('');
-        }, 2000);
+      
+      const userRef = doc(db, 'usuarios', userCredential.user.uid);
+      await setDoc(userRef, {
+        nickname: nickname,
+        email: email,
+        createdAt: new Date(),
       });
+
+      
+      navigation.navigate('Login'); 
+
+      Alert.alert('Cadastro realizado com sucesso!');
+    } catch (error) {
+      setErro('Erro ao realizar cadastro, tente novamente');
+      console.error(error.message);
+    }
   };
 
   return (
     <Container>
-      <LogoImage
-        source={{ uri: 'https://static.vecteezy.com/system/resources/thumbnails/007/698/902/small_2x/geek-gamer-avatar-profile-icon-free-vector.jpg' }}
-      />
-      <Titulo>Criar Conta</Titulo>
+      <Titulo>Cadastro</Titulo>
       <Input
-        placeholder="Email"
-        placeholderTextColor="#999"
-        keyboardType="email-address"
-        autoCapitalize="none"
+        placeholder="E-mail"
         value={email}
         onChangeText={setEmail}
+        keyboardType="email-address"
       />
-      <InputContainer>
-        <Input
-          placeholder="Senha"
-          placeholderTextColor="#999"
-          secureTextEntry={!senhaVisivel}
-          value={senha}
-          onChangeText={setSenha}
-        />
-        <IconOcultar onPress={() => setSenhaVisivel(!senhaVisivel)}>
-          <MaterialIcons name={senhaVisivel ? 'visibility' : 'visibility-off'} size={24} color="#999" />
-        </IconOcultar>
-      </InputContainer>
-      <InputContainer>
-        <Input
-          placeholder="Confirmar Senha"
-          placeholderTextColor="#999"
-          secureTextEntry={!confirmSenhaVisivel}
-          value={confirmSenha}
-          onChangeText={setConfirmSenha}
-        />
-        <IconOcultar onPress={() => setConfirmSenhaVisivel(!confirmSenhaVisivel)}>
-          <MaterialIcons name={confirmSenhaVisivel ? 'visibility' : 'visibility-off'} size={24} color="#999" />
-        </IconOcultar>
-      </InputContainer>
-      {erro ? <ErroTexto>{erro}</ErroTexto> : null}
+      <Input
+        placeholder="Senha"
+        value={senha}
+        onChangeText={setSenha}
+        secureTextEntry
+      />
+      <Input
+        placeholder="Confirmar Senha"
+        value={confirmSenha}
+        onChangeText={setConfirmSenha}
+        secureTextEntry
+      />
+      <Input
+        placeholder="Nickname"
+        value={nickname}
+        onChangeText={setNickname}
+      />
+      {erro ? <Texto>{erro}</Texto> : null}
       <Botao onPress={handleCadastro}>
         <BotaoTexto>Cadastrar</BotaoTexto>
       </Botao>

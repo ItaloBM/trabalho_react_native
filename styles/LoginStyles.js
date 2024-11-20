@@ -7,7 +7,6 @@ export const Container = styled.View`
   align-items: center;
   padding: 20px;
 `;
-
 export const Titulo = styled.Text`
   font-size: 32px;
   font-weight: bold;
@@ -27,18 +26,6 @@ export const Input = styled.TextInput`
   color: rgb(255, 255, 255); 
   border-width: 1px;
   border-color: rgb(72, 72, 72); 
-`;
-
-export const InputContainer = styled.View`
-  position: relative;
-  width: 100%;
-`;
-
-export const IconOcultar = styled.TouchableOpacity`
-  position: absolute;
-  right: 20px;
-  top: 45px;
-  margin-top: -12px; 
 `;
 
 export const Botao = styled.TouchableOpacity`
@@ -73,19 +60,3 @@ export const LogoImage = styled.Image`
   border-radius: 50px;
   margin-bottom: 20px;
 `;
-
-export const ErroTexto = styled.Text`
-  position: absolute; 
-  top: 20px; 
-  right: 20px; 
-  color: white;
-  padding: 10px;
-  background-color: rgba(255, 0, 0, 0.4); 
-  border: 2px solid red; 
-  border-radius: 5px; 
-  font-size: 14px;
-  font-weight: bold;
-  z-index: 1; 
-`;
-
-

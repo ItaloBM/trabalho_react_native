@@ -10,31 +10,31 @@ export const Container = styled.View`
 export const Titulo = styled.Text`
   font-size: 32px;
   font-weight: bold;
-  color: rgb(0, 255, 136); 
+  color: rgb(0, 255, 136);
   margin-bottom: 20px;
   text-shadow: 2px 2px 8px rgba(0, 255, 136, 0.7);
   text-align: center;
 `;
 
 export const Jogos = styled.View`
-  width: 210px; 
+  width: 210px;
   height: 300px;
   margin-left: 20px;
   padding: 5px;
   margin-vertical: 8px;
-  background-color: rgb(38, 38, 38); 
+  background-color: rgb(38, 38, 38);
   border-radius: 10px;
   align-items: center;
-  box-shadow: 0 4px 8px rgba(0, 255, 136, 0.4); 
-  overflow: hidden; 
+  box-shadow: 0 4px 8px rgba(0, 255, 136, 0.4);
+  overflow: hidden;
 `;
 
 export const ItemTexto = styled.Text`
-  color: rgb(255, 255, 255); 
+  color: rgb(255, 255, 255);
   font-size: 18px;
-  text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.3); 
+  text-shadow: 1px 1px 5px rgba(255, 255, 255, 0.3);
   margin-top: 10px;
-  text-align: center; 
+  text-align: center;
 `;
 
 export const Botao = styled.TouchableOpacity`
@@ -46,7 +46,7 @@ export const Botao = styled.TouchableOpacity`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   transition: background-color 0.3s ease;
   &:hover {
-    background-color: rgb(0, 200, 100); 
+    background-color: rgb(0, 200, 100);
   }
 `;
 
@@ -96,19 +96,21 @@ export const ModalTitulo = styled.Text`
 export const PerfilContainer = styled.View`
   flex-direction: row;
   align-items: center;
-  margin-bottom: 20px; 
+  margin-bottom: 20px;
 `;
 
 export const PerfilImagem = styled.Image`
-  width: 50px; 
-  height: 50px; 
-  border-radius: 25px; 
-  margin-right: 10px; 
+  width: 50px;
+  height: 50px;
+  border-radius: 25px;
+  margin-right: 10px;
 `;
 
 export const Nickname = styled.Text`
   color: rgb(0, 255, 136);
-  font-size: 18px; 
+  font-size: 18px;
   font-weight: bold;
-  text-shadow: 1px 1px 5px rgba(0, 255, 136, 0.3); 
+  text-shadow: 1px 1px 5px rgba(0, 255, 136, 0.3);
 `;
+
+
