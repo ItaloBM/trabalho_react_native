@@ -1,7 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FlatList, Image, View, TouchableOpacity, Modal, ActivityIndicator, TextInput, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
+import { auth } from '../databases/Firebase'; // Import Firebase auth
 import {
   Container,
   Titulo,
@@ -81,16 +82,24 @@ const ProfileModal = ({ avatarModalVisible, setAvatarModalVisible, nickname, set
   );
 };
 
-
 const Home = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedGame, setSelectedGame] = useState(null);
   const [loading, setLoading] = useState(false);
   const [avatarModalVisible, setAvatarModalVisible] = useState(false);
-  const [nickname, setNickname] = useState('Ovattsug');
+  const [nickname, setNickname] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const navigation = useNavigation();
   const flatListRef = useRef(null);
+
+  // Fetch the user's name from Firebase on component mount
+  useEffect(() => {
+    if (auth.currentUser) {
+      const email = auth.currentUser.email;
+      const username = email ? email.split('@')[0] : 'Jogador'; // Extract the part before '@'
+      setNickname(username); // Set the nickname to the username extracted
+    }
+  }, []);
 
   const openModal = (game) => {
     setSelectedGame(game);
