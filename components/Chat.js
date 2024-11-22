@@ -14,34 +14,36 @@ import {
   MensagemTexto,
 } from "../styles/ChatStyles";
 
-const Chat = () => {
+const Chat = ({ route }) => {
+  const { lobbyId } = route.params; // Receber o lobbyId da navegação
   const [mensagens, setMensagens] = useState([]); // Histórico de mensagens
   const [novaMensagem, setNovaMensagem] = useState(""); // Mensagem a ser enviada
   const [socket, setSocket] = useState(null); // Instância do socket
   const [usuario, setUsuario] = useState(""); // Nome do usuário logado (ou UID)
 
   useEffect(() => {
-    // Conectar ao servidor via Socket.IO
-
-    const newSocket = io("http://192.168.1.11:3000"); // Substitua 192.168.1.2 pelo IP da máquina servidora
+    // Conectar ao servidor via Socket.IO com o lobbyId específico
+    const newSocket = io("http://192.168.1.11:3000", {
+      query: { lobbyId }, // Passa o lobbyId ao se conectar
+    });
 
     setSocket(newSocket);
 
-    // Recuperar histórico ao conectar
+    // Recuperar histórico de mensagens do lobby específico
     newSocket.on("historico", (historico) => {
-      setMensagens(historico); // Definir histórico de mensagens
+      setMensagens(historico);
     });
 
-    // Receber novas mensagens
+    // Receber novas mensagens específicas do lobby
     newSocket.on("novaMensagem", (mensagem) => {
       setMensagens((prevMensagens) => [...prevMensagens, mensagem]);
     });
 
-    // Definir usuário logado (aqui, usando Firebase para pegar o usuário logado)
+    // Definir usuário logado (Firebase)
     const auth = getAuth();
     const user = auth.currentUser;
     if (user) {
-      setUsuario(user.displayName || user.email); // Atribuir nome ou e-mail ao usuário
+      setUsuario(user.displayName || user.email);
     }
 
     // Desconectar do servidor ao desmontar
@@ -49,15 +51,16 @@ const Chat = () => {
       newSocket.disconnect();
       console.log("Desconectado do servidor");
     };
-  }, []);
+  }, [lobbyId]);
 
   const enviarMensagem = () => {
     if (novaMensagem.trim() !== "" && socket) {
       // Criar mensagem com o usuário logado
       const mensagem = {
         texto: novaMensagem,
-        usuario: usuario, // Enviar o nome do usuário
+        usuario: usuario,
         timestamp: new Date(),
+        lobbyId, // Enviar o lobbyId junto para o servidor
       };
 
       // Enviar mensagem ao servidor
@@ -84,7 +87,7 @@ const Chat = () => {
           data={mensagens}
           keyExtractor={(item, index) => index.toString()}
           renderItem={({ item }) => (
-            <Mensagem>
+            <Mensagem enviadaPorUsuario={item.usuario === usuario}>
               <MensagemTexto>
                 <strong>{item.usuario || "Outro usuário"}:</strong> {item.texto}
               </MensagemTexto>

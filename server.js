@@ -7,14 +7,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*', // Permite qualquer origem
-    methods: ['GET', 'POST'], // Métodos permitidos
+    origin: '*',
+    methods: ['GET', 'POST'],
   },
-});
-
-// Definir uma rota para a raiz
-app.get('/', (req, res) => {
-  res.send('Servidor funcionando!');
 });
 
 // Conectar ao MongoDB
@@ -24,53 +19,64 @@ mongoose.connect('mongodb://localhost:27017/chat')
 
 const MensagemSchema = new mongoose.Schema({
   texto: String,
-  timestamp: { type: Date, default: Date.now }, // Garantir que o timestamp seja gerado corretamente
-  usuario: { type: String, default: 'Usuário Anônimo' },  // Adicionar um valor default caso o nome não seja fornecido
+  timestamp: { type: Date, default: Date.now },
+  usuario: { type: String, default: 'Usuário Anônimo' },
+  lobbyId: String, // Campo para identificar o lobby
 });
 
 const Mensagem = mongoose.model('Mensagem', MensagemSchema);
 
-io.on('connection', async (socket) => {
-  console.log('Usuário conectado:', socket.id);
+io.on('connection', (socket) => {
+  const { lobbyId } = socket.handshake.query; // Obter o lobbyId da query string
 
-  // Enviar histórico de mensagens ao cliente
-  try {
-    const mensagens = await Mensagem.find().sort({ timestamp: 1 }); // Ordenando por timestamp
-    socket.emit('historico', mensagens);
-  } catch (err) {
-    console.error('Erro ao buscar mensagens:', err);
-    socket.emit('historico', []); // Em caso de erro, enviar uma lista vazia
-  }
+  console.log(`Usuário conectado ao lobby: ${lobbyId}`);
 
-  // Receber nova mensagem do cliente
-  socket.on('enviarMensagem', async (mensagem) => {
-    try {
-      if (!mensagem.texto || !mensagem.usuario) {
-        console.error('Mensagem inválida:', mensagem);
-        return;
-      }
+  // Enviar histórico de mensagens para o lobby
+  Mensagem.find({ lobbyId })
+    .sort({ timestamp: 1 })
+    .then((historico) => {
+      socket.emit('historico', historico);
+    })
+    .catch((err) => {
+      console.error('Erro ao buscar mensagens:', err);
+      socket.emit('historico', []); // Em caso de erro, enviar uma lista vazia
+    });
 
-      const novaMensagem = new Mensagem({
-        texto: mensagem.texto,
-        usuario: mensagem.usuario,  // Receber o nome do usuário
-        timestamp: new Date()
-      });
-      await novaMensagem.save(); // Salvar no banco de dados
-
-      console.log('Mensagem salva:', novaMensagem);
-      io.emit('novaMensagem', novaMensagem); // Enviar para todos os clientes
-    } catch (err) {
-      console.error('Erro ao salvar mensagem:', err);
+  // Receber nova mensagem e salvá-la no MongoDB
+  socket.on('enviarMensagem', (mensagem) => {
+    if (mensagem.lobbyId !== lobbyId) {
+      console.error('Mensagem enviada para o lobby errado!');
+      return;
     }
+
+    const novaMensagem = new Mensagem({
+      texto: mensagem.texto,
+      usuario: mensagem.usuario,
+      timestamp: new Date(),
+      lobbyId: mensagem.lobbyId,
+    });
+
+    novaMensagem.save()
+      .then(() => {
+        console.log('Mensagem salva no MongoDB');
+        io.to(lobbyId).emit('novaMensagem', novaMensagem); // Enviar a nova mensagem apenas para o lobby correto
+      })
+      .catch((err) => {
+        console.error('Erro ao salvar mensagem:', err);
+      });
   });
+
+  // Atribuir o socket ao lobby
+  socket.join(lobbyId);
 
   // Desconectar
   socket.on('disconnect', () => {
-    console.log('Usuário desconectado:', socket.id);
+    console.log(`Usuário desconectado do lobby: ${lobbyId}`);
+    socket.leave(lobbyId); // Garantir que o usuário saia do lobby ao desconectar
   });
 });
 
-// Iniciar o servidor na porta 3000, permitindo conexões em qualquer endereço de rede (0.0.0.0)
+// Iniciar o servidor
 server.listen(3000, '0.0.0.0', () => {
   console.log('Servidor rodando na porta 3000');
 });
