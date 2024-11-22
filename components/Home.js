@@ -22,26 +22,25 @@ import {
 } from '../styles/HomeStyles';
 
 const gamesData = [
-  { id: '1', title: 'Rainbow Six Siege', image: require('../img/r6.png') },
-  { id: '2', title: 'Counter Strike 2', image: require('../img/cs2.png') },
-  { id: '3', title: 'Fortnite', image: require('../img/fortnite.png') },
-  { id: '4', title: 'Call of Duty: Warzone', image: require('../img/warzone.png') },
-  { id: '5', title: 'Red Dead Redemption 2', image: require('../img/red.png') },
-  { id: '6', title: 'Dota 2', image: require('../img/dota2.png') },
-  { id: '7', title: 'Valorant', image: require('../img/valorant.png') },
-  { id: '8', title: 'Grand Theft Auto V', image: require('../img/gta.png') },
-  { id: '9', title: 'League of Legends', image: require('../img/lol.png') },
-  { id: '10', title: 'Playerunknowns Battlegrounds', image: require('../img/pubg.png') },
+  { id: '1', title: 'Rainbow Six Siege' },
+  { id: '2', title: 'Counter Strike 2' },
+  { id: '3', title: 'Fortnite' },
+  { id: '4', title: 'Call of Duty: Warzone' },
+  { id: '5', title: 'Red Dead Redemption 2' },
+  { id: '6', title: 'Dota 2' },
+  { id: '7', title: 'Valorant' },
+  { id: '8', title: 'Grand Theft Auto V' },
+  { id: '9', title: 'League of Legends' },
+  { id: '10', title: 'Playerunknowns Battlegrounds' },
 ];
 
 const Home = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [nickname, setNickname] = useState('Carregando...');
-  const [avatarModalVisible, setAvatarModalVisible] = useState(false);
+  const [games, setGames] = useState([]);
   const [selectedGame, setSelectedGame] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [newNickname, setNewNickname] = useState('');
   const [animation] = useState(new Animated.Value(0));
 
   const navigation = useNavigation();
@@ -62,6 +61,34 @@ const Home = () => {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    fetchGames();
+  }, []);
+
+  const fetchGames = async () => {
+    try {
+      setLoading(true);
+      const gameImages = await Promise.all(
+        gamesData.map(async (game) => {
+          const response = await fetch(
+            `https://api.rawg.io/api/games?key=fbd0e8c049eb4491aab016400545ab60&search=${encodeURIComponent(game.title)}`
+          );
+          const data = await response.json();
+          const gameDetails = data.results[0]; // Pega o primeiro resultado
+          return {
+            ...game,
+            image: { uri: gameDetails.background_image }, // Atualiza a imagem com a URL da API
+          };
+        })
+      );
+      setGames(gameImages);
+    } catch (error) {
+      console.error('Erro ao buscar jogos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fetchUserNickname = async (uid) => {
     try {
       setLoading(true);
@@ -76,52 +103,6 @@ const Home = () => {
       setNickname('Erro ao carregar');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const updateNicknameInFirestore = async (uid, newNickname) => {
-    try {
-      const userDocRef = doc(db, 'usuarios', uid);
-      await updateDoc(userDocRef, {
-        nickname: newNickname,
-      });
-      console.log('Nickname atualizado com sucesso!');
-    } catch (error) {
-      console.error('Erro ao atualizar nickname no Firestore:', error);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      navigation.navigate('Login');
-    } catch (error) {
-      console.error('Erro ao sair:', error);
-    }
-  };
-
-  const openProfileModal = () => {
-    setAvatarModalVisible(true);
-    Animated.timing(animation, {
-      toValue: 1,
-      duration: 500,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const closeProfileModal = () => {
-    Animated.timing(animation, {
-      toValue: 0,
-      duration: 500,
-      useNativeDriver: true,
-    }).start(() => setAvatarModalVisible(false));
-  };
-
-  const updateNickname = () => {
-    if (newNickname.trim()) {
-      setNickname(newNickname);
-      updateNicknameInFirestore(user.uid, newNickname);
-      closeProfileModal();
     }
   };
 
@@ -162,12 +143,10 @@ const Home = () => {
       {user && (
         <>
           <PerfilContainer>
-            <TouchableOpacity onPress={openProfileModal}>
+            <TouchableOpacity>
               <PerfilImagem source={require('../img/avatar.png')} />
             </TouchableOpacity>
-            <TouchableOpacity onPress={openProfileModal}>
-              <Nickname>{nickname}</Nickname>
-            </TouchableOpacity>
+            <Nickname>{nickname}</Nickname>
           </PerfilContainer>
 
           <Titulo>Jogos Disponíveis</Titulo>
@@ -178,7 +157,7 @@ const Home = () => {
 
             <FlatList
               ref={flatListRef}
-              data={gamesData}
+              data={games}
               keyExtractor={(item) => item.id}
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -189,29 +168,6 @@ const Home = () => {
               <Icon name="chevron-forward" size={30} color="rgb(0, 255, 136)" />
             </TouchableOpacity>
           </NavegacaoContainer>
-
-          <Modal visible={avatarModalVisible} transparent animationType="fade">
-            <ModalContainer>
-              <Animated.View
-                style={[{ transform: [{ scale: animation }] }, { width: '80%', backgroundColor: 'rgb(38, 38, 38)', borderRadius: 10, padding: 20 }]}
-              >
-                <ModalTitulo>Editar Perfil</ModalTitulo>
-                <TextInput
-                  placeholder="Digite um novo nickname"
-                  placeholderTextColor="#888"
-                  value={newNickname}
-                  onChangeText={setNewNickname}
-                  style={{ backgroundColor: '#fff', padding: 10, borderRadius: 5, marginBottom: 10 }}
-                />
-                <Botao onPress={updateNickname}>
-                  <BotaoTexto>Salvar</BotaoTexto>
-                </Botao>
-                <TouchableOpacity onPress={closeProfileModal} style={{ position: 'absolute', top: 10, right: 10 }}>
-                  <Icon name="close" size={30} color="white" />
-                </TouchableOpacity>
-              </Animated.View>
-            </ModalContainer>
-          </Modal>
 
           <Modal visible={modalVisible} transparent animationType="slide">
             <ModalContainer>
