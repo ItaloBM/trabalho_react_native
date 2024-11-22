@@ -4,6 +4,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../databases/Firebase';
+import * as ImagePicker from 'expo-image-picker';  // Para escolher a imagem
 import {
   Container,
   Titulo,
@@ -34,6 +35,7 @@ const gamesData = [
   { id: '10', title: 'Playerunknowns Battlegrounds' },
 ];
 
+
 const Home = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -41,6 +43,7 @@ const Home = () => {
   const [games, setGames] = useState([]);
   const [selectedGame, setSelectedGame] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [profileModalVisible, setProfileModalVisible] = useState(false);  // Modal de perfil
   const [animation] = useState(new Animated.Value(0));
 
   const navigation = useNavigation();
@@ -125,6 +128,54 @@ const Home = () => {
     }, 1500);
   };
 
+  // Função para abrir o modal do perfil
+  const openProfileModal = () => {
+    setProfileModalVisible(true);
+  };
+
+  // Função para fechar o modal do perfil
+  const closeProfileModal = () => {
+    setProfileModalVisible(false);
+  };
+
+  // Função para fazer logout
+  const logout = async () => {
+    try {
+      await auth.signOut();
+      setUser(null);
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
+  // Função para atualizar o nickname
+  const updateNickname = async (newNickname) => {
+    if (!newNickname) return;
+    try {
+      const userRef = doc(db, 'usuarios', user.uid);
+      await updateDoc(userRef, { nickname: newNickname });
+      setNickname(newNickname);
+      closeProfileModal();
+    } catch (error) {
+      console.error('Erro ao atualizar nickname:', error);
+    }
+  };
+
+  // Função para atualizar a foto
+  const updateProfilePicture = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!result.cancelled) {
+      const userRef = doc(db, 'usuarios', user.uid);
+      await updateDoc(userRef, { profilePicture: result.uri }); // Atualiza a foto
+      setProfilePicture(result.uri);
+    }
+  };
+
   const renderGameItem = ({ item }) => (
     <Jogos>
       <TouchableOpacity onPress={() => openGameModal(item)}>
@@ -143,7 +194,7 @@ const Home = () => {
       {user && (
         <>
           <PerfilContainer>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={openProfileModal}>
               <PerfilImagem source={require('../img/avatar.png')} />
             </TouchableOpacity>
             <Nickname>{nickname}</Nickname>
@@ -169,6 +220,33 @@ const Home = () => {
             </TouchableOpacity>
           </NavegacaoContainer>
 
+          {/* Modal de Perfil */}
+          <Modal visible={profileModalVisible} transparent animationType="slide">
+            <ModalContainer>
+              <ModalConteudo>
+                <TouchableOpacity onPress={updateProfilePicture}>
+                  <ModalImagem source={require('../img/avatar.png')} />
+                </TouchableOpacity>
+                <TextInput
+                  style={{ borderBottomWidth: 1, marginBottom: 10 }}
+                  placeholder="Novo Nickname"
+                  value={nickname}
+                  onChangeText={setNickname}
+                />
+                <Botao onPress={() => updateNickname(nickname)}>
+                  <BotaoTexto>Salvar Nickname</BotaoTexto>
+                </Botao>
+                <Botao onPress={logout}>
+                  <BotaoTexto>Logout</BotaoTexto>
+                </Botao>
+                <TouchableOpacity onPress={closeProfileModal} style={{ position: 'absolute', top: 10, right: 10 }}>
+                  <Icon name="close" size={30} color="white" />
+                </TouchableOpacity>
+              </ModalConteudo>
+            </ModalContainer>
+          </Modal>
+          
+          {/* Modal de Jogo */}
           <Modal visible={modalVisible} transparent animationType="slide">
             <ModalContainer>
               <ModalConteudo>
