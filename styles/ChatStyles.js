@@ -1,4 +1,3 @@
-// ChatStyles.js
 import styled from 'styled-components/native';
 
 export const Container = styled.View`
@@ -25,6 +24,8 @@ export const Mensagem = styled.View`
   padding: 10px;
   border-radius: 10px;
   margin-bottom: 5px;
+  max-width: 80%;
+  align-self: ${(props) => (props.enviadaPorUsuario ? 'flex-end' : 'flex-start')};
 `;
 
 export const MensagemTexto = styled.Text`
