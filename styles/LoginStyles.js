@@ -1,62 +1,80 @@
 import styled from 'styled-components/native';
+import { Animated } from 'react-native';
 
 export const Container = styled.View`
   flex: 1;
-  background-color: rgb(10, 10, 10); 
-  justify-content: center;
+  background-color: #1f1b24;
   align-items: center;
+  justify-content: center;
   padding: 20px;
 `;
-export const Titulo = styled.Text`
-  font-size: 32px;
+
+export const LogoImagem = styled.Image`
+  width: 120px;
+  height: 120px;
+  border-radius: 60px;
+  margin-bottom: 20px;
+  border: 2px solid rgb(0, 255, 136);
+`;
+
+export const Titulo = styled(Animated.Text)`
+  font-size: 28px;
+  color: rgb(0, 255, 136);
   font-weight: bold;
+  margin-bottom: 20px;
   text-align: center;
-  color: rgb(0, 255, 136); 
-  text-shadow: 2px 2px 8px rgba(0, 255, 136, 0.7); 
+  letter-spacing: 1px;
+`;
+
+export const InputContainer = styled.View`
+  width: 100%;
+  position: relative;
 `;
 
 export const Input = styled.TextInput`
   width: 100%;
   height: 50px;
-  background-color: rgb(38, 38, 38); 
+  background-color: black;
   border-radius: 10px;
   padding: 10px;
   margin-top: 20px;
   font-size: 16px;
-  color: rgb(255, 255, 255); 
+  color: rgb(255, 255, 255);
   border-width: 1px;
-  border-color: rgb(72, 72, 72); 
+  border-color: rgb(72, 72, 72);
+  padding-right: 40px; 
+`;
+
+
+export const Icone = styled.TouchableOpacity`
+  position: absolute;
+  right: 15px; 
+  top: 20px;
+  bottom: 0;
+  justify-content: center; 
+  padding: 0px;
 `;
 
 export const Botao = styled.TouchableOpacity`
+  padding: 15px;
+  border-radius: 8px;
+  margin-top: 40px;
   width: 100%;
-  height: 50px;
-  background-color: rgb(255, 255, 255); 
-  justify-content: center;
+  background-color: black;
   align-items: center;
-  border-radius: 10px;
-  margin-bottom: 15px;
-  elevation: 3;
-  margin-top: 20px;
+  box-shadow: 0px 4px 6px rgb(0, 255, 136);
+  elevation: 5;
 `;
 
 export const BotaoTexto = styled.Text`
-  color: rgb(0, 0, 0); 
-  font-size: 20px;
+  color: #fff;
+  font-size: 18px;
   font-weight: bold;
-  letter-spacing: 1px;
 `;
 
 export const Texto = styled.Text`
-  width: 100%;
-  color: rgb(255, 255, 255);
-  text-align: end;
-  margin-bottom: 20px;
-`;
-
-export const LogoImage = styled.Image`
-  width: 100px;
-  height: 100px;
-  border-radius: 50px;
-  margin-bottom: 20px;
+  font-size: 14px;
+  color: #ccc;
+  margin-top: 10px;
+  text-align: center;
 `;

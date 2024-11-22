@@ -12,7 +12,7 @@ const Toast = ({ message, visible, onClose, type }) => {
 
       Animated.timing(progressAnim, {
         toValue: 0, 
-        duration: 5000, 
+        duration: 3000, 
         useNativeDriver: false,
       }).start(() => {
         onClose(); 
