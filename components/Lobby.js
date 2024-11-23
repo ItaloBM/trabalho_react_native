@@ -3,7 +3,7 @@ import { FlatList, View, Text, TouchableOpacity, Modal, Alert } from 'react-nati
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Container, Titulo, Botao, BotaoTexto, LobbyContainer, LobbyNome, LobbyMembros, ModalContainer, ModalTitulo, ModalInput } from '../styles/LobbyStyles';
 
-import { db } from '../databases/Firebase'; 
+import { db } from '../databases/Firebase'; // Certifique-se que está corretamente configurado
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import Toast from './Toast';
 
@@ -12,79 +12,73 @@ const Lobby = () => {
   const route = useRoute();
   const { selectedGame } = route.params || {};
 
-  const [Lobbies, setLobbies] = useState([]); 
+  const [Lobbies, setLobbies] = useState([]);
   const [LobbySelecionado, setLobbySelecionado] = useState(null);
-  const [ToastVisivel, setToastVisivel] = useState(false); 
+  const [ToastVisivel, setToastVisivel] = useState(false);
   const [ModalVisivel, setModalVisivel] = useState(false);
   const [LobbyName, setLobbyName] = useState('');
   const [LobbyMaximoMembros, setLobbyMaximoMembros] = useState('');
   const [LobbyCriadoToast, setLobbyCriadoToast] = useState(false);
-  const [ErroMembros, setErroMembros] = useState(''); 
-  const [ErroFormulario, setErroFormulario] = useState(''); 
+  const [ErroFormulario, setErroFormulario] = useState('');
 
+  // Buscar os lobbies disponíveis do Firestore
   const fetchLobbies = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, 'lobbies'));
-      const lobbies = querySnapshot.docs.map(doc => ({
+      const lobbies = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
       setLobbies(lobbies);
     } catch (error) {
       console.error('Erro ao buscar lobbies:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os lobbies. Tente novamente.');
+      Alert.alert('Erro', 'Não foi possível carregar os lobbies. Verifique sua conexão e tente novamente.');
     }
   };
 
   useEffect(() => {
-    fetchLobbies(); 
+    fetchLobbies();
   }, []);
 
-  const filteredLobbies = Lobbies.filter(lobby => lobby.game === selectedGame);
+  // Filtrar lobbies pelo jogo selecionado
+  const filteredLobbies = Lobbies.filter((lobby) => lobby.game === selectedGame);
 
+  // Selecionar um lobby
   const joinLobby = (lobby) => {
     setLobbySelecionado(lobby);
   };
 
+  // Entrar no lobby selecionado
   const handleEnterLobby = () => {
     if (LobbySelecionado && LobbySelecionado.currentMembers < LobbySelecionado.maxMembers) {
       navigation.navigate('Chat', { lobbyId: LobbySelecionado.id });
     } else {
       setToastVisivel(true);
-      setTimeout(() => setToastVisivel(false), 3000); 
+      setTimeout(() => setToastVisivel(false), 3000);
     }
   };
 
-  const renderLobbyItem = ({ item }) => (
-    <TouchableOpacity onPress={() => joinLobby(item)} style={{ marginBottom: 10 }}>
-      <LobbyContainer selected={LobbySelecionado && LobbySelecionado.id === item.id}>
-        <LobbyNome>{item.name}</LobbyNome>
-        <LobbyMembros>Membros: {item.currentMembers}/{item.maxMembers}</LobbyMembros>
-      </LobbyContainer>
-    </TouchableOpacity>
-  );
-
+  // Criar novo lobby
   const handleCreateLobby = async () => {
     const maxMembers = parseInt(LobbyMaximoMembros, 10);
 
-    
+    // Validar campos
     if (!LobbyName || !LobbyMaximoMembros || isNaN(maxMembers)) {
-      setErroFormulario('Por favor, preencha todos os campos corretamente antes de criar o lobby.');
-      setTimeout(() => setErroFormulario(''), 3000); 
+      setErroFormulario('Preencha todos os campos corretamente antes de criar o lobby.');
+      setTimeout(() => setErroFormulario(''), 3000);
       return;
     }
 
-    
     if (maxMembers <= 1) {
-      setErroFormulario('O lobby precisa ter pelo menos 2 membros para ser criado.');
-      setTimeout(() => setErroFormulario(''), 3000); 
+      setErroFormulario('O lobby precisa ter pelo menos 2 membros.');
+      setTimeout(() => setErroFormulario(''), 3000);
       return;
     }
 
     try {
       const newLobby = {
         name: LobbyName,
-        maxMembers: maxMembers,
+        maxMembers,
         currentMembers: 0,
         game: selectedGame,
       };
@@ -92,9 +86,11 @@ const Lobby = () => {
       const lobbiesRef = collection(db, 'lobbies');
       const docRef = await addDoc(lobbiesRef, newLobby);
 
-      setLobbies(prevLobbies => [
+      console.log('Lobby criado com sucesso:', docRef.id);
+
+      setLobbies((prevLobbies) => [
         ...prevLobbies,
-        { id: docRef.id, ...newLobby }
+        { id: docRef.id, ...newLobby },
       ]);
 
       setLobbyName('');
@@ -106,8 +102,8 @@ const Lobby = () => {
         setLobbyCriadoToast(false);
       }, 3000);
     } catch (error) {
-      console.error('Erro ao criar lobby:', error);
-      Alert.alert('Erro', 'Ocorreu um erro ao criar o lobby. Tente novamente.');
+      console.error('Erro ao criar lobby no Firestore:', error);
+      Alert.alert('Erro', 'Não foi possível criar o lobby. Verifique sua conexão e tente novamente.');
     }
   };
 
@@ -118,7 +114,14 @@ const Lobby = () => {
         <FlatList
           data={filteredLobbies}
           keyExtractor={(item) => item.id}
-          renderItem={renderLobbyItem}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => joinLobby(item)} style={{ marginBottom: 10 }}>
+              <LobbyContainer selected={LobbySelecionado && LobbySelecionado.id === item.id}>
+                <LobbyNome>{item.name}</LobbyNome>
+                <LobbyMembros>Membros: {item.currentMembers}/{item.maxMembers}</LobbyMembros>
+              </LobbyContainer>
+            </TouchableOpacity>
+          )}
         />
       ) : (
         <Text style={{ color: 'white', fontSize: 18 }}>Nenhum lobby disponível para este jogo.</Text>
@@ -154,11 +157,8 @@ const Lobby = () => {
             }}
             keyboardType="numeric"
           />
-          {ErroMembros ? (
-            <Text style={{ color: 'red', marginBottom: 10 }}>{ErroMembros}</Text>
-          ) : null}
           {ErroFormulario ? (
-            <Text style={{ color: 'red', marginBottom: 10 }}>{ErroFormulario}</Text> 
+            <Text style={{ color: 'red', marginBottom: 10 }}>{ErroFormulario}</Text>
           ) : null}
           <Botao onPress={handleCreateLobby}>
             <BotaoTexto>Criar Lobby</BotaoTexto>

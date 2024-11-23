@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Alert, Animated } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore'; // Importar funções do Firestore
-import { auth, db } from '../databases/Firebase'; // Firebase config
+import { auth } from '../databases/Firebase';
 import { useNavigation } from '@react-navigation/native';
 import {Container,Titulo,InputContainer,Input,Botao,BotaoTexto,Texto,LogoImagem,Icone,} from '../styles/LoginStyles';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -26,26 +25,11 @@ const Login = () => {
   const handleLogin = () => {
     console.log('Tentando logar com:', email);
     signInWithEmailAndPassword(auth, email, senha)
-      .then(async (userCredential) => {
+      .then(() => {
         console.log('Login bem-sucedido');
-        
-        // Obtendo o usuário autenticado
-        const user = userCredential.user;
-
-        // Verificando se o usuário tem dados adicionais no Firestore (como perfil)
-        const userRef = doc(db, 'usuarios', user.uid);
-        const docSnap = await getDoc(userRef);
-
-        if (docSnap.exists()) {
-          // Usuário encontrado e com dados completos
-          Alert.alert('Sucesso', 'Login realizado com sucesso!');
-          setErro('');
-          navigation.navigate('Home');
-        } else {
-          // Caso o usuário não tenha dados no Firestore
-          Alert.alert('Erro', 'Este usuário não está completamente cadastrado.');
-          setErro('Cadastro incompleto');
-        }
+        Alert.alert('Sucesso', 'Login realizado com sucesso!');
+        setErro('');
+        navigation.navigate('Home');
       })
       .catch(error => {
         console.error('Erro ao logar:', error.message);

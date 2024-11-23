@@ -22,8 +22,11 @@ const Chat = ({ route }) => {
   const [usuario, setUsuario] = useState(""); // Nome do usuário logado (ou UID)
 
   useEffect(() => {
+    // Recuperar o IP do servidor a partir da variável de ambiente
+    const serverIp = process.env.REACT_APP_SERVER_IP || "192.168.1.6"; // Valor padrão se a variável não estiver definida
+
     // Conectar ao servidor via Socket.IO com o lobbyId específico
-    const newSocket = io("http://192.168.1.11:3000", {
+    const newSocket = io(`http://${serverIp}:3000`, {
       query: { lobbyId }, // Passa o lobbyId ao se conectar
     });
 
