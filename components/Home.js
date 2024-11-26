@@ -4,7 +4,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { auth, db } from '../databases/Firebase';
-import * as ImagePicker from 'expo-image-picker';  // Para escolher a imagem
 import {
   Container,
   Titulo,
@@ -15,7 +14,6 @@ import {
   NavegacaoContainer,
   ModalContainer,
   ModalConteudo,
-  ModalImagem,
   ModalTitulo,
   PerfilContainer,
   PerfilImagem,
@@ -35,7 +33,6 @@ const gamesData = [
   { id: '10', title: 'Playerunknowns Battlegrounds' },
 ];
 
-
 const Home = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -43,8 +40,11 @@ const Home = () => {
   const [games, setGames] = useState([]);
   const [selectedGame, setSelectedGame] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-  const [profileModalVisible, setProfileModalVisible] = useState(false);  // Modal de perfil
-  const [animation] = useState(new Animated.Value(0));
+  const [profileModalVisible, setProfileModalVisible] = useState(false);
+  const [avatarModalVisible, setAvatarModalVisible] = useState(false); // Controle do modal de avatar
+  const [selectedAvatar, setSelectedAvatar] = useState(require('../img/avatar.jpg'));
+  const [avatarOptions, setAvatarOptions] = useState([]);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const navigation = useNavigation();
   const flatListRef = useRef(null);
@@ -66,6 +66,7 @@ const Home = () => {
 
   useEffect(() => {
     fetchGames();
+    loadAvatarOptions();
   }, []);
 
   const fetchGames = async () => {
@@ -77,10 +78,10 @@ const Home = () => {
             `https://api.rawg.io/api/games?key=fbd0e8c049eb4491aab016400545ab60&search=${encodeURIComponent(game.title)}`
           );
           const data = await response.json();
-          const gameDetails = data.results[0]; // Pega o primeiro resultado
+          const gameDetails = data.results[0];
           return {
             ...game,
-            image: { uri: gameDetails.background_image }, // Atualiza a imagem com a URL da API
+            image: { uri: gameDetails.background_image },
           };
         })
       );
@@ -92,12 +93,29 @@ const Home = () => {
     }
   };
 
+  const loadAvatarOptions = () => {
+    const avatars = [
+      require('../img/avatar.jpg'),
+      require('../img/avatar1.jpg'),
+      require('../img/avatar2.jpg'),
+      require('../img/avatar3.jpg'),
+      require('../img/avatar4.jpg'),
+      require('../img/avatar5.jpg'),
+      require('../img/avatar6.jpg'),
+      require('../img/avatar7.jpg'),
+    ];
+    setAvatarOptions(avatars);
+  };
+
   const fetchUserNickname = async (uid) => {
     try {
       setLoading(true);
       const userDoc = await getDoc(doc(db, 'usuarios', uid));
       if (userDoc.exists()) {
         setNickname(userDoc.data().nickname || 'Sem nickname');
+        if (userDoc.data().profilePicture) {
+          setSelectedAvatar({ uri: userDoc.data().profilePicture });
+        }
       } else {
         setNickname('Usuário não encontrado');
       }
@@ -111,12 +129,12 @@ const Home = () => {
 
   const openGameModal = (game) => {
     setSelectedGame(game);
-    setModalVisible(true);
+    setModalVisible(true); // Abre o modal ao selecionar um jogo
   };
 
   const closeGameModal = () => {
-    setModalVisible(false);
-    setSelectedGame(null);
+    setModalVisible(false); // Fecha o modal
+    setSelectedGame(null); // Limpa o jogo selecionado
   };
 
   const goToLobby = () => {
@@ -128,17 +146,22 @@ const Home = () => {
     }, 1500);
   };
 
-  // Função para abrir o modal do perfil
   const openProfileModal = () => {
     setProfileModalVisible(true);
   };
 
-  // Função para fechar o modal do perfil
   const closeProfileModal = () => {
     setProfileModalVisible(false);
   };
 
-  // Função para fazer logout
+  const openAvatarModal = () => {
+    setAvatarModalVisible(true); // Abre o modal de seleção de avatar
+  };
+
+  const closeAvatarModal = () => {
+    setAvatarModalVisible(false); // Fecha o modal de avatar
+  };
+
   const logout = async () => {
     try {
       await auth.signOut();
@@ -149,7 +172,6 @@ const Home = () => {
     }
   };
 
-  // Função para atualizar o nickname
   const updateNickname = async (newNickname) => {
     if (!newNickname) return;
     try {
@@ -162,20 +184,16 @@ const Home = () => {
     }
   };
 
-  // Função para atualizar a foto
-  const updateProfilePicture = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!result.cancelled) {
+  const selectAvatar = async (avatar) => {
+    setSelectedAvatar(avatar);
+    try {
       const userRef = doc(db, 'usuarios', user.uid);
-      await updateDoc(userRef, { profilePicture: result.uri }); // Atualiza a foto
-      setProfilePicture(result.uri);
+      await updateDoc(userRef, { profilePicture: avatar.uri });
+      closeAvatarModal(); // Fecha o modal de avatar após a seleção
+    } catch (error) {
+      console.error('Erro ao atualizar avatar:', error);
     }
   };
-
   const renderGameItem = ({ item }) => (
     <Jogos>
       <TouchableOpacity onPress={() => openGameModal(item)}>
@@ -184,6 +202,8 @@ const Home = () => {
       </TouchableOpacity>
     </Jogos>
   );
+
+
 
   if (loading) {
     return <ActivityIndicator size="large" color="#00f" />;
@@ -195,7 +215,7 @@ const Home = () => {
         <>
           <PerfilContainer>
             <TouchableOpacity onPress={openProfileModal}>
-              <PerfilImagem source={require('../img/avatar.png')} />
+              <PerfilImagem source={selectedAvatar} />
             </TouchableOpacity>
             <Nickname>{nickname}</Nickname>
           </PerfilContainer>
@@ -220,47 +240,98 @@ const Home = () => {
             </TouchableOpacity>
           </NavegacaoContainer>
 
-          {/* Modal de Perfil */}
-          <Modal visible={profileModalVisible} transparent animationType="slide">
-            <ModalContainer>
-              <ModalConteudo>
-                <TouchableOpacity onPress={updateProfilePicture}>
-                  <ModalImagem source={require('../img/avatar.png')} />
-                </TouchableOpacity>
-                <TextInput
-                  style={{ borderBottomWidth: 1, marginBottom: 10 }}
-                  placeholder="Novo Nickname"
-                  value={nickname}
-                  onChangeText={setNickname}
-                />
-                <Botao onPress={() => updateNickname(nickname)}>
-                  <BotaoTexto>Salvar Nickname</BotaoTexto>
-                </Botao>
-                <Botao onPress={logout}>
-                  <BotaoTexto>Logout</BotaoTexto>
-                </Botao>
-                <TouchableOpacity onPress={closeProfileModal} style={{ position: 'absolute', top: 10, right: 10 }}>
-                  <Icon name="close" size={30} color="white" />
-                </TouchableOpacity>
-              </ModalConteudo>
-            </ModalContainer>
-          </Modal>
-          
           {/* Modal de Jogo */}
           <Modal visible={modalVisible} transparent animationType="slide">
             <ModalContainer>
               <ModalConteudo>
-                <ModalImagem source={selectedGame?.image} />
                 <ModalTitulo>{selectedGame?.title}</ModalTitulo>
+                <Image source={selectedGame?.image} style={{ width: 300, height: 200, borderRadius: 10 }} />
                 <Botao onPress={goToLobby}>
-                  <BotaoTexto>Entrar na Sala</BotaoTexto>
+                  <BotaoTexto>Ir para o Lobby</BotaoTexto>
                 </Botao>
-                <TouchableOpacity onPress={closeGameModal} style={{ position: 'absolute', top: 10, right: 10 }}>
-                  <Icon name="close" size={30} color="white" />
-                </TouchableOpacity>
+                <Botao onPress={closeGameModal}>
+                  <BotaoTexto>Fechar</BotaoTexto>
+                </Botao>
               </ModalConteudo>
             </ModalContainer>
           </Modal>
+
+          {/* Modal de Perfil */}
+          <Modal visible={profileModalVisible} transparent animationType="slide">
+            <ModalContainer>
+              <ModalConteudo>
+                <ModalTitulo>Perfil</ModalTitulo>
+                <TextInput
+                  value={nickname}
+                  onChangeText={setNickname}
+                  placeholder="Digite um novo nickname"
+                  placeholderTextColor="#fff"
+                  style={{
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#fff',
+                    marginVertical: 20,
+                    color: '#fff',
+                  }}
+                />
+
+                <Botao onPress={() => updateNickname(nickname)}>
+                  <BotaoTexto>Salvar Alterações</BotaoTexto>
+                </Botao>
+                <Botao onPress={openAvatarModal}>
+                  <BotaoTexto>Alterar Avatar</BotaoTexto>
+                </Botao>
+                <Botao onPress={closeProfileModal}>
+                  <BotaoTexto>Fechar</BotaoTexto>
+                </Botao>
+              </ModalConteudo>
+            </ModalContainer>
+          </Modal>
+
+          {/* Modal de Alteração de Avatar */}
+          <Modal visible={avatarModalVisible} transparent animationType="slide">
+            <ModalContainer>
+              <ModalConteudo>
+                <ModalTitulo>Selecione um Avatar</ModalTitulo>
+
+                {/* Lista de Avatares */}
+                <FlatList
+                  data={avatarOptions}
+                  keyExtractor={(item, index) => index.toString()}
+                  numColumns={3}
+                  contentContainerStyle={{ alignItems: 'center' }}
+                  renderItem={({ item, index }) => (
+                    <TouchableOpacity
+                      onPress={() => setSelectedImageIndex(index)}
+                      style={{
+                        margin: 10,
+                        borderWidth: selectedImageIndex === index ? 2 : 0,
+                        borderColor: 'rgb(0, 255, 136)',
+                        borderRadius: 50,
+                      }}
+                    >
+                      <Image
+                        source={item}
+                        style={{
+                          width: 80,
+                          height: 80,
+                          borderRadius: 40,
+                        }}
+                      />
+                    </TouchableOpacity>
+                  )}
+                />
+
+                {/* Botões */}
+                <Botao onPress={() => selectAvatar(avatarOptions[selectedImageIndex])}>
+                  <BotaoTexto>Salvar</BotaoTexto>
+                </Botao>
+                <Botao onPress={closeAvatarModal}>
+                  <BotaoTexto>Cancelar</BotaoTexto>
+                </Botao>
+              </ModalConteudo>
+            </ModalContainer>
+          </Modal>
+
         </>
       )}
     </Container>

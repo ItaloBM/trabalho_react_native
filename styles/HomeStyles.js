@@ -68,6 +68,7 @@ export const ModalContainer = styled.View`
   background-color: rgba(0, 0, 0, 0.7);
   justify-content: center;
   align-items: center;
+  overflow: hidden; /* Adicionado */
 `;
 
 export const ModalConteudo = styled.View`
@@ -77,13 +78,14 @@ export const ModalConteudo = styled.View`
   align-items: center;
   width: 80%;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+  overflow: hidden; /* Adicionado */
 `;
 
+
 export const ModalImagem = styled.Image`
-  width: 150px;
-  height: 150px;
+  width: 90px;
+  height: 90px;
   border-radius: 10px;
-  margin-bottom: 20px;
 `;
 
 export const ModalTitulo = styled.Text`
@@ -96,7 +98,7 @@ export const ModalTitulo = styled.Text`
 export const PerfilContainer = styled.View`
   flex-direction: row;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 100px;
 `;
 
 export const PerfilImagem = styled.Image`
@@ -112,5 +114,6 @@ export const Nickname = styled.Text`
   font-weight: bold;
   text-shadow: 1px 1px 5px rgba(0, 255, 136, 0.3);
 `;
+
 
 
