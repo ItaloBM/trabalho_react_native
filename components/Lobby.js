@@ -3,8 +3,8 @@ import { FlatList, View, Text, TouchableOpacity, Modal, Alert } from 'react-nati
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Container, Titulo, Botao, BotaoTexto, LobbyContainer, LobbyNome, LobbyMembros, ModalContainer, ModalTitulo, ModalInput } from '../styles/LobbyStyles';
 
-import { db } from '../databases/Firebase'; // Certifique-se que está corretamente configurado
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { db } from '../databases/Firebase'; 
+import { collection, addDoc, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import Toast from './Toast';
 
 const Lobby = () => {
@@ -14,6 +14,7 @@ const Lobby = () => {
 
   const [Lobbies, setLobbies] = useState([]);
   const [LobbySelecionado, setLobbySelecionado] = useState(null);
+  const [UsuarioAtual, setUsuarioAtual] = useState(null); 
   const [ToastVisivel, setToastVisivel] = useState(false);
   const [ModalVisivel, setModalVisivel] = useState(false);
   const [LobbyName, setLobbyName] = useState('');
@@ -21,40 +22,77 @@ const Lobby = () => {
   const [LobbyCriadoToast, setLobbyCriadoToast] = useState(false);
   const [ErroFormulario, setErroFormulario] = useState('');
 
-  // Buscar os lobbies disponíveis do Firestore
-  const fetchLobbies = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'lobbies'));
+  // Atualizar lobbies em tempo real
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'lobbies'), (querySnapshot) => {
       const lobbies = querySnapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data(),
       }));
       setLobbies(lobbies);
-    } catch (error) {
-      console.error('Erro ao buscar lobbies:', error);
-      Alert.alert('Erro', 'Não foi possível carregar os lobbies. Verifique sua conexão e tente novamente.');
-    }
-  };
+    });
 
-  useEffect(() => {
-    fetchLobbies();
+    return () => unsubscribe();
   }, []);
 
   // Filtrar lobbies pelo jogo selecionado
   const filteredLobbies = Lobbies.filter((lobby) => lobby.game === selectedGame);
 
-  // Selecionar um lobby
-  const joinLobby = (lobby) => {
-    setLobbySelecionado(lobby);
-  };
-
   // Entrar no lobby selecionado
-  const handleEnterLobby = () => {
-    if (LobbySelecionado && LobbySelecionado.currentMembers < LobbySelecionado.maxMembers) {
-      navigation.navigate('Chat', { lobbyId: LobbySelecionado.id });
-    } else {
+  const handleEnterLobby = async (lobby) => {
+    if (!lobby) return;
+
+    // Verifica se o usuário já está no lobby
+    if (UsuarioAtual && UsuarioAtual.id === lobby.id) {
+      // Não incrementa o número de membros, pois já está no lobby
+      Alert.alert('Você já entrou nesse lobby.');
+      return;
+    }
+
+    // Verifica se o lobby está cheio
+    if (lobby.currentMembers >= lobby.maxMembers) {
       setToastVisivel(true);
       setTimeout(() => setToastVisivel(false), 3000);
+      return;
+    }
+
+    try {
+      // Incrementa o número de membros
+      const increment = lobby.currentMembers + 1;
+      const lobbyRef = doc(db, 'lobbies', lobby.id);
+      await updateDoc(lobbyRef, { currentMembers: increment });
+
+      // Define o lobby selecionado e guarda o usuário atual
+      setLobbySelecionado(lobby);
+      setUsuarioAtual({ id: lobby.id, name: lobby.name });
+      navigation.navigate('Chat', { lobbyId: lobby.id });
+    } catch (error) {
+      console.error('Erro ao entrar no lobby:', error);
+      Alert.alert('Erro', 'Não foi possível entrar no lobby.');
+    }
+  };
+
+  // Sair do lobby selecionado ou voltar para a página anterior
+  const handleExitLobby = async () => {
+    if (!LobbySelecionado || !UsuarioAtual) return;
+
+    try {
+      // Decrementa o número de membros apenas uma vez para o usuário que está saindo
+      const decrement = Math.max(0, LobbySelecionado.currentMembers - 1); 
+      const lobbyRef = doc(db, 'lobbies', LobbySelecionado.id);
+
+      await updateDoc(lobbyRef, { currentMembers: decrement });
+
+      // Limpa os dados do lobby e do usuário
+      setLobbySelecionado(null);
+      setUsuarioAtual(null);
+
+      // Navegar de volta ou alertar o usuário
+      navigation.goBack();
+      Alert.alert('Você saiu do lobby.');
+    } catch (error) {
+      console.error('Erro ao sair do lobby:', error);
+      Alert.alert('Erro', 'Não foi possível sair do lobby.');
     }
   };
 
@@ -62,7 +100,6 @@ const Lobby = () => {
   const handleCreateLobby = async () => {
     const maxMembers = parseInt(LobbyMaximoMembros, 10);
 
-    // Validar campos
     if (!LobbyName || !LobbyMaximoMembros || isNaN(maxMembers)) {
       setErroFormulario('Preencha todos os campos corretamente antes de criar o lobby.');
       setTimeout(() => setErroFormulario(''), 3000);
@@ -88,11 +125,6 @@ const Lobby = () => {
 
       console.log('Lobby criado com sucesso:', docRef.id);
 
-      setLobbies((prevLobbies) => [
-        ...prevLobbies,
-        { id: docRef.id, ...newLobby },
-      ]);
-
       setLobbyName('');
       setLobbyMaximoMembros('');
       setModalVisivel(false);
@@ -115,7 +147,10 @@ const Lobby = () => {
           data={filteredLobbies}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => joinLobby(item)} style={{ marginBottom: 10 }}>
+            <TouchableOpacity
+              onPress={() => handleEnterLobby(item)}
+              style={{ marginBottom: 10 }}
+            >
               <LobbyContainer selected={LobbySelecionado && LobbySelecionado.id === item.id}>
                 <LobbyNome>{item.name}</LobbyNome>
                 <LobbyMembros>Membros: {item.currentMembers}/{item.maxMembers}</LobbyMembros>
@@ -126,11 +161,13 @@ const Lobby = () => {
       ) : (
         <Text style={{ color: 'white', fontSize: 18 }}>Nenhum lobby disponível para este jogo.</Text>
       )}
+
       {LobbySelecionado && (
-        <Botao onPress={handleEnterLobby}>
-          <BotaoTexto>Entrar no Lobby</BotaoTexto>
+        <Botao onPress={handleExitLobby}>
+          <BotaoTexto>Sair do Lobby</BotaoTexto>
         </Botao>
       )}
+
       <Botao onPress={() => setModalVisivel(true)}>
         <BotaoTexto>Criar Novo Lobby</BotaoTexto>
       </Botao>

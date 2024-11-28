@@ -4,7 +4,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build": "expo build",
+    "clean": "expo start --clear"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",
@@ -13,10 +15,9 @@
     "@react-native-firebase/app": "^21.4.1",
     "@react-native-firebase/auth": "^21.4.1",
     "@react-native-firebase/firestore": "^21.4.1",
-    "@react-navigation/drawer": "*",
+    "@react-navigation/drawer": "^6.6.1",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.11.0",
-    "@react-navigation/stack": "*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "expo": "^52.0.10",
@@ -29,6 +30,7 @@
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.74.5",
+    "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.16.1",
     "react-native-image-crop-picker": "^0.41.5",
     "react-native-paper": "4.9.2",
@@ -44,7 +46,8 @@
     "styled-components": "^6.1.13"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0"
+    "@babel/core": "^7.20.0",
+    "babel-preset-expo": "^9.2.0"
   },
   "private": true
 }
